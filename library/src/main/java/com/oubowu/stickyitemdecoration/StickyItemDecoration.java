@@ -17,14 +17,18 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
     private int mStickyHeadType;
     private RecyclerView.Adapter mAdapter;
     private int mNeedStickyPosition;
+
     private int mStickyHeadPosition;
+    private int[] mInto;
 
     private StickyHeadContainer mStickyHeadContainer;
+    private boolean mEnableStickyHead = true;
 
     public StickyItemDecoration(StickyHeadContainer stickyHeadContainer, int stickyHeadType) {
         mStickyHeadContainer = stickyHeadContainer;
         mStickyHeadType = stickyHeadType;
     }
+
 
     // 当我们调用mRecyclerView.addItemDecoration()方法添加decoration的时候，RecyclerView在绘制的时候，去会绘制decorator，即调用该类的onDraw和onDrawOver方法，
     // 1.onDraw方法先于drawChildren
@@ -74,6 +78,7 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
                 mStickyHeadContainer.setVisibility(View.INVISIBLE);
             }
             mStickyHeadContainer.reset();
+            mStickyHeadContainer.setVisibility(View.INVISIBLE);
         }
 
     }
@@ -102,6 +107,7 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
         // 当前位置为绘制的分割线的时候,会导致view == null的情况发生
         if (belowView == null) {
             return VIEW_NOT_FOUND;
+
         }
 
         return parent.getChildAdapterPosition(belowView);
@@ -154,10 +160,33 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
         } else if (layoutManager instanceof LinearLayoutManager) {
             firstVisiblePosition = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
         } else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            int[] into = new int[((StaggeredGridLayoutManager) layoutManager).getSpanCount()];
-            ((StaggeredGridLayoutManager) layoutManager).findFirstVisibleItemPositions(into);
+            mInto = new int[((StaggeredGridLayoutManager) layoutManager).getSpanCount()];
+            ((StaggeredGridLayoutManager) layoutManager).findFirstVisibleItemPositions(mInto);
             firstVisiblePosition = Integer.MAX_VALUE;
-            for (int pos : into) {
+            for (int pos : mInto) {
+                firstVisiblePosition = Math.min(pos, firstVisiblePosition);
+            }
+        }
+        return firstVisiblePosition;
+    }
+
+    /**
+     * 找出第一个完全可见的Item的位置
+     *
+     * @param layoutManager
+     * @return
+     */
+    private int findFirstCompletelyVisiblePosition(RecyclerView.LayoutManager layoutManager) {
+        int firstVisiblePosition = 0;
+        if (layoutManager instanceof GridLayoutManager) {
+            firstVisiblePosition = ((GridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
+        } else if (layoutManager instanceof LinearLayoutManager) {
+            firstVisiblePosition = ((LinearLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
+        } else if (layoutManager instanceof StaggeredGridLayoutManager) {
+            mInto = new int[((StaggeredGridLayoutManager) layoutManager).getSpanCount()];
+            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(mInto);
+            firstVisiblePosition = Integer.MAX_VALUE;
+            for (int pos : mInto) {
                 firstVisiblePosition = Math.min(pos, firstVisiblePosition);
             }
         }
