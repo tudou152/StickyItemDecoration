@@ -1,11 +1,7 @@
 package com.oubowu.stickyitemdecoration;
 
 import android.graphics.Canvas;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.view.View;
 
 /**
@@ -66,7 +62,7 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
         if (mNeedStickyPosition >= mStickyHeadPosition && mStickyHeadPosition != -1) {
             if (!isSticky) {
                 isSticky = true;
-                mStickyHeadContainer.setVisibility(View.VISIBLE);
+                mStickyHeadContainer.stickyStart();
             }
 
             mStickyHeadContainer.onDataChange(mStickyHeadPosition);
@@ -75,10 +71,9 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
 
             if (isSticky) {
                 isSticky = false;
-                mStickyHeadContainer.setVisibility(View.INVISIBLE);
+                mStickyHeadContainer.stickyEnd();
             }
-            mStickyHeadContainer.reset();
-            mStickyHeadContainer.setVisibility(View.INVISIBLE);
+//            mStickyHeadContainer.reset();
         }
 
     }
@@ -145,52 +140,6 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
      */
     private boolean isStickyHeadType(int type) {
         return mStickyHeadType == type;
-    }
-
-    /**
-     * 找出第一个可见的Item的位置
-     *
-     * @param layoutManager
-     * @return
-     */
-    private int findFirstVisiblePosition(RecyclerView.LayoutManager layoutManager) {
-        int firstVisiblePosition = 0;
-        if (layoutManager instanceof GridLayoutManager) {
-            firstVisiblePosition = ((GridLayoutManager) layoutManager).findFirstVisibleItemPosition();
-        } else if (layoutManager instanceof LinearLayoutManager) {
-            firstVisiblePosition = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
-        } else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            mInto = new int[((StaggeredGridLayoutManager) layoutManager).getSpanCount()];
-            ((StaggeredGridLayoutManager) layoutManager).findFirstVisibleItemPositions(mInto);
-            firstVisiblePosition = Integer.MAX_VALUE;
-            for (int pos : mInto) {
-                firstVisiblePosition = Math.min(pos, firstVisiblePosition);
-            }
-        }
-        return firstVisiblePosition;
-    }
-
-    /**
-     * 找出第一个完全可见的Item的位置
-     *
-     * @param layoutManager
-     * @return
-     */
-    private int findFirstCompletelyVisiblePosition(RecyclerView.LayoutManager layoutManager) {
-        int firstVisiblePosition = 0;
-        if (layoutManager instanceof GridLayoutManager) {
-            firstVisiblePosition = ((GridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
-        } else if (layoutManager instanceof LinearLayoutManager) {
-            firstVisiblePosition = ((LinearLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
-        } else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            mInto = new int[((StaggeredGridLayoutManager) layoutManager).getSpanCount()];
-            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(mInto);
-            firstVisiblePosition = Integer.MAX_VALUE;
-            for (int pos : mInto) {
-                firstVisiblePosition = Math.min(pos, firstVisiblePosition);
-            }
-        }
-        return firstVisiblePosition;
     }
 
     /**

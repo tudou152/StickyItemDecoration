@@ -23,6 +23,7 @@ public class StickyHeadContainer extends ViewGroup {
     private int mBottom;
 
     private DataCallback mDataCallback;
+    private StickyCallBack mStickyCallBack;
 
     public StickyHeadContainer(Context context) {
         this(context, null);
@@ -129,8 +130,8 @@ public class StickyHeadContainer extends ViewGroup {
     }
 
     protected void onDataChange(int stickyHeadPosition) {
-        if (mDataCallback != null && mLastStickyHeadPosition != stickyHeadPosition) {
-            mDataCallback.onDataChange(stickyHeadPosition);
+        if (mStickyCallBack != null && mLastStickyHeadPosition != stickyHeadPosition) {
+            mStickyCallBack.onDataChange(stickyHeadPosition);
         }
         mLastStickyHeadPosition = stickyHeadPosition;
     }
@@ -146,5 +147,30 @@ public class StickyHeadContainer extends ViewGroup {
 
     public void setDataCallback(DataCallback dataCallback) {
         mDataCallback = dataCallback;
+    }
+
+    public interface StickyCallBack {
+        void stickyStart();
+        void onDataChange(int pos);
+        void stickyEnd();
+    }
+
+    public void setStickyCallBack(StickyCallBack stickyCallBack) {
+        mStickyCallBack = stickyCallBack;
+    }
+
+    protected void stickyStart() {
+        setVisibility(View.VISIBLE);
+        if (mStickyCallBack != null) {
+            mStickyCallBack.stickyStart();
+        }
+    }
+
+    protected void stickyEnd() {
+        setVisibility(View.INVISIBLE);
+        reset();
+        if (mStickyCallBack != null) {
+            mStickyCallBack.stickyEnd();
+        }
     }
 }

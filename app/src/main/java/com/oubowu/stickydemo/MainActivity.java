@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -75,6 +76,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private static final String TAG = MainActivity.class.getSimpleName();
+
     private void initView() {
 
         final StickyHeadContainer container = (StickyHeadContainer) findViewById(R.id.shc);
@@ -88,15 +91,7 @@ public class MainActivity extends AppCompatActivity {
                 mAdapter.notifyItemChanged(mStickyPosition);
             }
         });
-        container.setDataCallback(new StickyHeadContainer.DataCallback() {
-            @Override
-            public void onDataChange(int pos) {
-                mStickyPosition = pos;
-                StockEntity.StockInfo item = mAdapter.getData().get(pos).getData();
-                tvStockName.setText(item.stickyHeadName);
-                checkBox.setChecked(item.check);
-            }
-        });
+
         more.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,6 +102,25 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Toast.makeText(MainActivity.this, "点击了粘性头部：" + tvStockName.getText(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        container.setStickyCallBack(new StickyHeadContainer.StickyCallBack() {
+            @Override
+            public void stickyStart() {
+                Log.d(TAG, "stickyStart: ");
+            }
+
+            @Override
+            public void stickyEnd() {
+                Log.d(TAG, "stickyEnd: ");
+            }
+
+            @Override
+            public void onDataChange(int pos) {
+                mStickyPosition = pos;
+                StockEntity.StockInfo item = mAdapter.getData().get(pos).getData();
+                tvStockName.setText(item.stickyHeadName);
+                checkBox.setChecked(item.check);
             }
         });
 
