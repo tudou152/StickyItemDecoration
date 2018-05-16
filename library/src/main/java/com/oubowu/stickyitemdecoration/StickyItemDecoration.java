@@ -16,7 +16,7 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
 
     private int mStickyHeadType;
     private RecyclerView.Adapter mAdapter;
-    private int mFirstVisiblePosition;
+    private int mNeedStickyPosition;
     private int mStickyHeadPosition;
 
     private StickyHeadContainer mStickyHeadContainer;
@@ -32,6 +32,8 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
     // 3.getItemOffsets 可以通过outRect.set()为每个Item设置一定的偏移量，主要用于绘制Decorator。
     private static final String TAG = StickyItemDecoration.class.getSimpleName();
 
+    private boolean isSticky;
+
     @Override
     public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
         super.onDraw(c, parent, state);
@@ -43,48 +45,52 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
             return;
         }
 
-        calculateStickyHeadPosition( c, parent);
+        mNeedStickyPosition = findNeedStickyPosition(c, parent);
 
-        if (mFirstVisiblePosition >= mStickyHeadPosition && mStickyHeadPosition != -1) {
-//            final View belowView = parent.findChildViewUnder(c.getWidth() / 2, mStickyHeadContainer.getChildHeight() + 0.01f);
-            mStickyHeadContainer.setVisibility(View.VISIBLE);
+        // 解决跳动的问题
+        if (mNeedStickyPosition == VIEW_NOT_FOUND) {
+            return;
+        }
+
+        // 获取标签的位置，
+        int stickyHeadPosition = findStickyHeadPosition(mNeedStickyPosition);
+        if (stickyHeadPosition >= 0 && mStickyHeadPosition != stickyHeadPosition) {
+            // 标签位置有效并且和缓存的位置不同
+            mStickyHeadPosition = stickyHeadPosition;
+        }
+
+        if (mNeedStickyPosition >= mStickyHeadPosition && mStickyHeadPosition != -1) {
+            if (!isSticky) {
+                isSticky = true;
+                mStickyHeadContainer.setVisibility(View.VISIBLE);
+            }
+
             mStickyHeadContainer.onDataChange(mStickyHeadPosition);
-            int offset;
-//            Log.d(TAG, "onDraw: " + (belowView != null ?  belowView.getTop() : 0));
-//            if (isStickyHead(parent, belowView) && belowView.getTop() > 0) {
-//                offset = belowView.getTop() - mStickyHeadContainer.getHeight();
-//            } else {
-//                offset = 0;
-//            }
-//            mStickyHeadContainer.scrollChild(offset);
+//            animation(c, parent);
         } else {
-            mStickyHeadContainer.setVisibility(View.INVISIBLE);
+
+            if (isSticky) {
+                isSticky = false;
+                mStickyHeadContainer.setVisibility(View.INVISIBLE);
+            }
             mStickyHeadContainer.reset();
         }
 
     }
 
-    private int mNeedStickyPosition;
+    private void animation(Canvas c, RecyclerView parent) {
 
-    /**
-     * 吸附的条件是 1.第一个可见的item 2.该item是需要吸附的type
-     * */
-    private void calculateStickyHeadPosition(Canvas c, RecyclerView parent) {
-        final RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
-
-        // 获取第一个可见的item位置
-//        mFirstVisiblePosition = findFirstVisiblePosition(layoutManager);
-        mFirstVisiblePosition = findNeedStickyPosition(c, parent);
-
-        // 获取标签的位置，
-        int stickyHeadPosition = findStickyHeadPosition(mFirstVisiblePosition);
-        if (stickyHeadPosition >= 0 && mStickyHeadPosition != stickyHeadPosition) {
-
-            // 标签位置有效并且和缓存的位置不同
-            mStickyHeadPosition = stickyHeadPosition;
-
+        final View belowView = parent.findChildViewUnder(c.getWidth() / 2, mStickyHeadContainer.getChildHeight() + 0.01f);
+        int offset;
+        if (isStickyHead(parent, belowView) && belowView.getTop() > mStickyHeadContainer.getTop()) {
+            offset = belowView.getTop() - mStickyHeadContainer.getHeight();
+        } else {
+            offset = 0;
         }
+        mStickyHeadContainer.scrollChild(offset);
     }
+
+    private static final int VIEW_NOT_FOUND = -2;
 
     /**
      * 找到需要吸附的item的时机和位置
@@ -93,9 +99,18 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
 
         final View belowView = parent.findChildViewUnder(c.getWidth() / 2, mStickyHeadContainer.getY());
 
+        // 当前位置为绘制的分割线的时候,会导致view == null的情况发生
+        if (belowView == null) {
+            return VIEW_NOT_FOUND;
+        }
+
         return parent.getChildAdapterPosition(belowView);
     }
 
+    /**
+     * 没有找到sticky类型的view
+     * */
+    private static final int STICKY_HEAD_POSITION_NOT_FOUND = -3;
 
     /**
      * 从传入位置递减找出标签的位置
@@ -113,7 +128,7 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
             }
         }
 
-        return -1;
+        return STICKY_HEAD_POSITION_NOT_FOUND;
     }
 
     /**
