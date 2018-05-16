@@ -5,6 +5,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.View;
 
 /**
@@ -29,6 +30,7 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
     // 1.onDraw方法先于drawChildren
     // 2.onDrawOver在drawChildren之后，一般我们选择复写其中一个即可。
     // 3.getItemOffsets 可以通过outRect.set()为每个Item设置一定的偏移量，主要用于绘制Decorator。
+    private static final String TAG = StickyItemDecoration.class.getSimpleName();
 
     @Override
     public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
@@ -41,19 +43,20 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
             return;
         }
 
-        calculateStickyHeadPosition(parent);
+        calculateStickyHeadPosition( c, parent);
 
         if (mFirstVisiblePosition >= mStickyHeadPosition && mStickyHeadPosition != -1) {
-            final View belowView = parent.findChildViewUnder(c.getWidth() / 2, mStickyHeadContainer.getChildHeight() + 0.01f);
+//            final View belowView = parent.findChildViewUnder(c.getWidth() / 2, mStickyHeadContainer.getChildHeight() + 0.01f);
             mStickyHeadContainer.setVisibility(View.VISIBLE);
             mStickyHeadContainer.onDataChange(mStickyHeadPosition);
             int offset;
-            if (isStickyHead(parent, belowView) && belowView.getTop() > 0) {
-                offset = belowView.getTop() - mStickyHeadContainer.getChildHeight();
-            } else {
-                offset = 0;
-            }
-            mStickyHeadContainer.scrollChild(offset);
+//            Log.d(TAG, "onDraw: " + (belowView != null ?  belowView.getTop() : 0));
+//            if (isStickyHead(parent, belowView) && belowView.getTop() > 0) {
+//                offset = belowView.getTop() - mStickyHeadContainer.getHeight();
+//            } else {
+//                offset = 0;
+//            }
+//            mStickyHeadContainer.scrollChild(offset);
         } else {
             mStickyHeadContainer.setVisibility(View.INVISIBLE);
             mStickyHeadContainer.reset();
@@ -61,11 +64,17 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
 
     }
 
-    private void calculateStickyHeadPosition(RecyclerView parent) {
+    private int mNeedStickyPosition;
+
+    /**
+     * 吸附的条件是 1.第一个可见的item 2.该item是需要吸附的type
+     * */
+    private void calculateStickyHeadPosition(Canvas c, RecyclerView parent) {
         final RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
 
         // 获取第一个可见的item位置
-        mFirstVisiblePosition = findFirstVisiblePosition(layoutManager);
+//        mFirstVisiblePosition = findFirstVisiblePosition(layoutManager);
+        mFirstVisiblePosition = findNeedStickyPosition(c, parent);
 
         // 获取标签的位置，
         int stickyHeadPosition = findStickyHeadPosition(mFirstVisiblePosition);
@@ -76,6 +85,17 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
 
         }
     }
+
+    /**
+     * 找到需要吸附的item的时机和位置
+     * */
+    private int findNeedStickyPosition(Canvas c, RecyclerView parent) {
+
+        final View belowView = parent.findChildViewUnder(c.getWidth() / 2, mStickyHeadContainer.getY());
+
+        return parent.getChildAdapterPosition(belowView);
+    }
+
 
     /**
      * 从传入位置递减找出标签的位置
